@@ -1,0 +1,91 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-jose: #378ADD;
+  --color-anais: #D4537E;
+  --color-lucas: #639922;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: #FFF8F5;
+  color: #1a1a1a;
+  overscroll-behavior: none;
+}
+
+/* Safe area support */
+.safe-area-pt {
+  padding-top: env(safe-area-inset-top, 0);
+}
+.safe-area-pb {
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+/* Smooth transitions */
+.transition-all {
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+/* Custom ring color for members */
+.ring-jose { --tw-ring-color: #378ADD; }
+.ring-anais { --tw-ring-color: #D4537E; }
+.ring-lucas { --tw-ring-color: #639922; }
+
+/* Prevent text selection on tap */
+button, a {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Focus visible only with keyboard */
+button:focus:not(:focus-visible),
+a:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Animation keyframes */
+@keyframes slideUp {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-slide-up {
+  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.2s ease-out;
+}
+
+/* PWA display mode */
+@media (display-mode: standalone) {
+  .safe-area-pt {
+    padding-top: max(env(safe-area-inset-top, 0), 0px);
+  }
+}
