@@ -122,7 +122,7 @@ export function EventForm({ open, onClose, onSave, event, defaultDate }: Props) 
                 type="button"
                 onClick={() => set('color', c)}
                 className={`w-7 h-7 rounded-full transition-all ${form.color === c ? 'ring-2 ring-offset-2 scale-110' : ''}`}
-                style={{ backgroundColor: c, ringColor: c }}
+                style={{ backgroundColor: c, '--tw-ring-color': c } as React.CSSProperties}
               />
             ))}
           </div>

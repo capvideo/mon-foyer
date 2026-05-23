@@ -21,8 +21,8 @@ export function AccountCard({ account, income, expense, onClick, active }: Props
       }`}
       style={{
         background: `linear-gradient(135deg, ${account.color}CC, ${account.color})`,
-        ringColor: account.color,
-      }}
+        '--tw-ring-color': account.color,
+      } as React.CSSProperties}
     >
       <div className="flex items-start justify-between mb-3">
         <div>

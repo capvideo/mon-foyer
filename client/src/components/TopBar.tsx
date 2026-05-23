@@ -33,8 +33,8 @@ export function TopBar({ currentMember, onChangeMember, onOpenChat, unreadCount 
               }`}
               style={{
                 backgroundColor: m.color,
-                ringColor: m.color,
-              }}
+                '--tw-ring-color': m.color,
+              } as React.CSSProperties}
               title={m.name}
             >
               {m.emoji}
