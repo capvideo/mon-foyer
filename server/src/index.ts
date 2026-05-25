@@ -23,10 +23,14 @@ async function main() {
   const app = express();
   const server = http.createServer(app);
 
-  const allowedOrigins = process.env.CORS_ORIGIN
-    ? process.env.CORS_ORIGIN.split(',').map(s => s.trim())
-    : ['http://localhost:5173'];
-  app.use(cors({ origin: allowedOrigins, credentials: true }));
+  const allowedOrigins = [
+    'https://mon-foyerclient-production.up.railway.app',
+    'http://localhost:5173',
+    ...(process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',').map(s => s.trim()) : []),
+  ];
+  const corsOptions = { origin: allowedOrigins };
+  app.options('*', cors(corsOptions));
+  app.use(cors(corsOptions));
   app.use(express.json());
 
   // API routes
