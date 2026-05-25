@@ -23,7 +23,10 @@ async function main() {
   const app = express();
   const server = http.createServer(app);
 
-  app.use(cors({ origin: '*' }));
+  const allowedOrigins = process.env.CORS_ORIGIN
+    ? process.env.CORS_ORIGIN.split(',').map(s => s.trim())
+    : ['http://localhost:5173'];
+  app.use(cors({ origin: allowedOrigins, credentials: true }));
   app.use(express.json());
 
   // API routes
