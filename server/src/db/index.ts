@@ -1,20 +1,61 @@
-import { open, Database } from 'sqlite';
-import sqlite3 from 'sqlite3';
-import path from 'path';
+import { Pool } from 'pg';
 
-let _db: Database | null = null;
+const pool = new Pool({
+  host: process.env.DB_HOST,
+  port: parseInt(process.env.DB_PORT ?? '5432'),
+  database: process.env.DB_NAME ?? 'postgres',
+  user: process.env.DB_USER ?? 'postgres',
+  password: process.env.DB_PASSWORD,
+  ssl: { rejectUnauthorized: false },
+});
 
-export async function getDb(): Promise<Database> {
-  if (_db) return _db;
-  const dbPath = process.env.DB_PATH || path.join(process.cwd(), 'mon-foyer.db');
-  _db = await open({ filename: dbPath, driver: sqlite3.Database });
-  await _db.run('PRAGMA journal_mode = WAL');
-  await _db.run('PRAGMA foreign_keys = ON');
-  return _db;
+// Convert SQLite ? placeholders to PostgreSQL $1, $2, ...
+// Also flattens single-array-arg calling convention used in seed.ts
+function toPositional(sql: string, args: any[]): [string, any[]] {
+  const params = args.length === 1 && Array.isArray(args[0]) ? args[0] : args;
+  let i = 0;
+  return [sql.replace(/\?/g, () => `$${++i}`), params];
+}
+
+type RunResult = { lastID: number; changes: number };
+
+const db = {
+  async run(sql: string, ...args: any[]): Promise<RunResult> {
+    const isInsert = /^\s*INSERT/i.test(sql);
+    const finalSql = isInsert && !/RETURNING/i.test(sql) ? `${sql} RETURNING id` : sql;
+    const [converted, params] = toPositional(finalSql, args);
+    const result = await pool.query(converted, params);
+    return {
+      lastID: isInsert ? (result.rows[0]?.id ?? 0) : 0,
+      changes: result.rowCount ?? 0,
+    };
+  },
+
+  async get<T = any>(sql: string, ...args: any[]): Promise<T | undefined> {
+    const [converted, params] = toPositional(sql, args);
+    const result = await pool.query(converted, params);
+    return result.rows[0] as T | undefined;
+  },
+
+  async all<T = any>(sql: string, ...args: any[]): Promise<T[]> {
+    const [converted, params] = toPositional(sql, args);
+    const result = await pool.query(converted, params);
+    return result.rows as T[];
+  },
+
+  async exec(sql: string): Promise<void> {
+    const statements = sql.split(';').map(s => s.trim()).filter(Boolean);
+    for (const stmt of statements) {
+      await pool.query(stmt);
+    }
+  },
+};
+
+export async function getDb() {
+  return db;
 }
 
 export async function initDb(): Promise<void> {
-  const db = await getDb();
   await db.exec(`
     CREATE TABLE IF NOT EXISTS members (
       id TEXT PRIMARY KEY,
@@ -23,14 +64,14 @@ export async function initDb(): Promise<void> {
       emoji TEXT NOT NULL DEFAULT '👤'
     );
     CREATE TABLE IF NOT EXISTS accounts (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       name TEXT NOT NULL,
       bank TEXT NOT NULL,
       initial_balance REAL NOT NULL DEFAULT 0,
       color TEXT NOT NULL DEFAULT '#378ADD'
     );
     CREATE TABLE IF NOT EXISTS transactions (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       account_id INTEGER NOT NULL,
       label TEXT NOT NULL,
       amount REAL NOT NULL,
@@ -43,7 +84,7 @@ export async function initDb(): Promise<void> {
       is_rental INTEGER NOT NULL DEFAULT 0
     );
     CREATE TABLE IF NOT EXISTS events (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       title TEXT NOT NULL,
       date TEXT NOT NULL,
       time TEXT,
@@ -56,7 +97,7 @@ export async function initDb(): Promise<void> {
       reminder_minutes INTEGER
     );
     CREATE TABLE IF NOT EXISTS shopping_items (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       name TEXT NOT NULL,
       category TEXT NOT NULL,
       quantity TEXT,
@@ -66,7 +107,7 @@ export async function initDb(): Promise<void> {
       created_at TEXT NOT NULL
     );
     CREATE TABLE IF NOT EXISTS todos (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       title TEXT NOT NULL,
       description TEXT,
       priority TEXT NOT NULL DEFAULT 'normal',
@@ -84,7 +125,7 @@ export async function initDb(): Promise<void> {
       icon TEXT
     );
     CREATE TABLE IF NOT EXISTS messages (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       channel_id TEXT NOT NULL,
       member_id TEXT NOT NULL,
       content TEXT NOT NULL,
@@ -93,12 +134,12 @@ export async function initDb(): Promise<void> {
       metadata TEXT
     );
     CREATE TABLE IF NOT EXISTS push_subscriptions (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       member_id TEXT NOT NULL,
       endpoint TEXT NOT NULL,
       p256dh TEXT NOT NULL,
       auth TEXT NOT NULL,
       created_at TEXT NOT NULL
-    );
+    )
   `);
 }
