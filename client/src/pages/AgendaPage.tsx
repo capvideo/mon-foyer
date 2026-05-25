@@ -167,7 +167,7 @@ export function AgendaPage({ currentMember }: Props) {
 
 function EventCard({ event, onEdit, onDelete }: { event: Event; onEdit: () => void; onDelete: (id: number) => void }) {
   const handleDownloadIcs = () => {
-    window.open(`/api/events/${event.id}/ics`, '_blank');
+    window.open(`${import.meta.env.VITE_API_URL ?? ''}/api/events/${event.id}/ics`, '_blank');
   };
 
   const handleGoogleCalendar = () => {

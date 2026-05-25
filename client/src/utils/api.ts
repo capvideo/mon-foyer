@@ -1,4 +1,4 @@
-const BASE = '/api';
+const BASE = (import.meta.env.VITE_API_URL ?? '') + '/api';
 
 async function req<T>(path: string, opts?: RequestInit): Promise<T> {
   const r = await fetch(BASE + path, {
