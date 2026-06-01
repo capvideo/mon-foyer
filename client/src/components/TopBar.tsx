@@ -1,5 +1,6 @@
-import { MessageCircle, Bell } from 'lucide-react';
+import { MessageCircle, Bell, LogOut } from 'lucide-react';
 import { MEMBERS, Member } from '../types';
+import { useAuth } from '../contexts/AuthContext';
 
 interface Props {
   currentMember: Member;
@@ -9,6 +10,7 @@ interface Props {
 }
 
 export function TopBar({ currentMember, onChangeMember, onOpenChat, unreadCount = 0 }: Props) {
+  const { logout } = useAuth();
   return (
     <header className="fixed top-0 left-0 right-0 z-40 bg-white border-b border-gray-100 safe-area-pt">
       <div className="flex items-center justify-between px-4 h-14">
@@ -57,6 +59,13 @@ export function TopBar({ currentMember, onChangeMember, onOpenChat, unreadCount 
           </button>
           <button className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors">
             <Bell size={20} className="text-gray-600" />
+          </button>
+          <button
+            onClick={logout}
+            className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
+            title="Se déconnecter"
+          >
+            <LogOut size={18} className="text-gray-400" />
           </button>
         </div>
       </div>

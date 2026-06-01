@@ -6,7 +6,9 @@ import { WebSocketServer } from 'ws';
 
 import { initDb, getDb } from './db/index';
 import { setupWebSocket } from './websocket';
+import { requireAuth } from './middleware/auth';
 
+import authRouter from './routes/auth';
 import accountsRouter from './routes/accounts';
 import transactionsRouter from './routes/transactions';
 import eventsRouter from './routes/events';
@@ -33,19 +35,22 @@ async function main() {
   app.use(cors(corsOptions));
   app.use(express.json());
 
-  // API routes
-  app.use('/api/accounts', accountsRouter);
-  app.use('/api/transactions', transactionsRouter);
-  app.use('/api/events', eventsRouter);
-  app.use('/api/shopping', shoppingRouter);
-  app.use('/api/todos', todosRouter);
-  app.use('/api/chat', chatRouter);
-  app.use('/api/push', pushRouter);
+  // Public routes
+  app.use('/api/auth', authRouter);
+
+  // Protected API routes
+  app.use('/api/accounts', requireAuth, accountsRouter);
+  app.use('/api/transactions', requireAuth, transactionsRouter);
+  app.use('/api/events', requireAuth, eventsRouter);
+  app.use('/api/shopping', requireAuth, shoppingRouter);
+  app.use('/api/todos', requireAuth, todosRouter);
+  app.use('/api/chat', requireAuth, chatRouter);
+  app.use('/api/push', requireAuth, pushRouter);
 
   // Members endpoint
-  app.get('/api/members', async (_req, res) => {
+  app.get('/api/members', requireAuth, async (_req, res) => {
     const db = await getDb();
-    res.json(await db.all('SELECT * FROM members'));
+    res.json(await db.all('SELECT id, name, color, emoji, email FROM members'));
   });
 
   // Serve client build in production

@@ -1,3 +1,4 @@
+import bcrypt from 'bcryptjs';
 import { getDb, initDb } from './index';
 
 async function seed() {
@@ -16,10 +17,11 @@ async function seed() {
     DELETE FROM members;
   `);
 
-  // Members
-  await db.run("INSERT INTO members (id, name, color, emoji) VALUES ('jose', 'José', '#378ADD', '👨')");
-  await db.run("INSERT INTO members (id, name, color, emoji) VALUES ('anais', 'Anaïs', '#D4537E', '👩')");
-  await db.run("INSERT INTO members (id, name, color, emoji) VALUES ('lucas', 'Lucas', '#639922', '🧒')");
+  // Members (password: Foyer2026!)
+  const hash = await bcrypt.hash('Foyer2026!', 10);
+  await db.run("INSERT INTO members (id, name, color, emoji, email, password_hash) VALUES ('jose', 'José', '#378ADD', '👨', 'jose@monfoyer.fr', ?)", hash);
+  await db.run("INSERT INTO members (id, name, color, emoji, email, password_hash) VALUES ('anais', 'Anaïs', '#D4537E', '👩', 'anais@monfoyer.fr', ?)", hash);
+  await db.run("INSERT INTO members (id, name, color, emoji, email, password_hash) VALUES ('lucas', 'Lucas', '#639922', '🧒', 'lucas@monfoyer.fr', ?)", hash);
 
   // Accounts (initial_balance calculé pour que solde final = LCL 2850€, SG 1340€)
   await db.run("INSERT INTO accounts (name, bank, initial_balance, color) VALUES ('LCL Principal', 'LCL', 1705.43, '#378ADD')");

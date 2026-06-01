@@ -1,10 +1,19 @@
 const BASE = (import.meta.env.VITE_API_URL ?? '') + '/api';
 
 async function req<T>(path: string, opts?: RequestInit): Promise<T> {
+  const token = localStorage.getItem('auth_token');
   const r = await fetch(BASE + path, {
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
     ...opts,
   });
+  if (r.status === 401) {
+    localStorage.removeItem('auth_token');
+    window.location.reload();
+    throw new Error('Session expirée');
+  }
   if (!r.ok) throw new Error(`HTTP ${r.status}`);
   return r.json();
 }

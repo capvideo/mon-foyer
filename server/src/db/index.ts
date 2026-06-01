@@ -61,7 +61,9 @@ export async function initDb(): Promise<void> {
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
       color TEXT NOT NULL,
-      emoji TEXT NOT NULL DEFAULT '👤'
+      emoji TEXT NOT NULL DEFAULT '👤',
+      email TEXT,
+      password_hash TEXT
     );
     CREATE TABLE IF NOT EXISTS accounts (
       id SERIAL PRIMARY KEY,
@@ -142,4 +144,8 @@ export async function initDb(): Promise<void> {
       created_at TEXT NOT NULL
     )
   `);
+  // Migration: add auth columns to existing deployments
+  await pool.query(`ALTER TABLE members ADD COLUMN IF NOT EXISTS email TEXT`);
+  await pool.query(`ALTER TABLE members ADD COLUMN IF NOT EXISTS password_hash TEXT`);
+  await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS members_email_idx ON members(email) WHERE email IS NOT NULL`);
 }

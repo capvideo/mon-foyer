@@ -171,7 +171,8 @@ export function AgendaPage({ currentMember }: Props) {
 function CalendarSync() {
   const [copied, setCopied] = useState(false);
   const apiBase = import.meta.env.VITE_API_URL ?? window.location.origin;
-  const feedUrl = `${apiBase}/api/events/calendar.ics`;
+  const token = localStorage.getItem('auth_token') ?? '';
+  const feedUrl = `${apiBase}/api/events/calendar.ics?token=${token}`;
   const webcalUrl = feedUrl.replace(/^https?:/, 'webcal:');
   const googleUrl = `https://www.google.com/calendar/render?cid=${encodeURIComponent(webcalUrl)}`;
 

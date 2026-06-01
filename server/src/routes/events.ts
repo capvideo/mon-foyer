@@ -1,5 +1,7 @@
 import { Router } from 'express';
+import jwt from 'jsonwebtoken';
 import { getDb } from '../db/index';
+import { JWT_SECRET } from '../middleware/auth';
 
 const router = Router();
 
@@ -17,8 +19,13 @@ router.get('/', async (req, res) => {
   res.json(rows.map((e: any) => ({ ...e, memberIds: JSON.parse(e.member_ids) })));
 });
 
-// Must come before /:id to avoid "calendar.ics" being matched as an ID
+// Must come before /:id to avoid "calendar.ics" being matched as an ID.
+// Auth via ?token= query param so native calendar apps (webcal://) can subscribe.
 router.get('/calendar.ics', async (req, res) => {
+  const token = (req.query.token as string) || req.headers.authorization?.replace('Bearer ', '');
+  if (!token) { res.status(401).send('Token requis'); return; }
+  try { jwt.verify(token, JWT_SECRET); } catch { res.status(401).send('Token invalide ou expiré'); return; }
+
   const db = await getDb();
   const { memberId } = req.query;
   let q = 'SELECT * FROM events WHERE 1=1';
