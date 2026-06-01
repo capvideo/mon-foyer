@@ -1,17 +1,13 @@
 import { Pool } from 'pg';
 
-const pool = new Pool(
-  process.env.DATABASE_URL
-    ? { connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } }
-    : {
-        host: process.env.DB_HOST,
-        port: parseInt(process.env.DB_PORT ?? '6543'),
-        database: process.env.DB_NAME ?? 'postgres',
-        user: process.env.DB_USER ?? 'postgres',
-        password: process.env.DB_PASSWORD,
-        ssl: { rejectUnauthorized: false },
-      }
-);
+if (!process.env.DATABASE_URL) {
+  throw new Error('DATABASE_URL environment variable is required');
+}
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false },
+});
 
 // Convert SQLite ? placeholders to PostgreSQL $1, $2, ...
 // Also flattens single-array-arg calling convention used in seed.ts
