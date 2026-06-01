@@ -1,5 +1,5 @@
 {
-  "name": "@mon-foyer/server",
+  "name": "mon-foyer-server",
   "version": "1.0.0",
   "scripts": {
     "dev": "tsx watch src/index.ts",
