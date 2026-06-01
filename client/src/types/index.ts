@@ -1,8 +1,10 @@
 export interface Member {
-  id: 'jose' | 'anais' | 'lucas';
+  id: string;
   name: string;
   color: string;
   emoji: string;
+  is_admin?: number;
+  has_account?: boolean;
 }
 
 export interface Account {

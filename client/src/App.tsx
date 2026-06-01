@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { MEMBERS, Member } from './types';
+import { Member } from './types';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { LoginPage } from './pages/LoginPage';
+import { SignupPage } from './pages/SignupPage';
 import { TopBar } from './components/TopBar';
 import { BottomNav } from './components/BottomNav';
 import { HomePage } from './pages/HomePage';
@@ -16,14 +17,15 @@ type Tab = 'home' | 'budget' | 'agenda' | 'courses' | 'todo';
 function AppContent() {
   const { user, loading } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>('home');
-  const [currentMember, setCurrentMember] = useState<Member>(MEMBERS[0]);
+  const [currentMember, setCurrentMember] = useState<Member | null>(null);
   const [chatOpen, setChatOpen] = useState(false);
+  const [inviteToken] = useState(() => new URLSearchParams(window.location.search).get('token'));
 
-  // Set current member to the logged-in user on login
   useEffect(() => {
     if (user) {
-      const member = MEMBERS.find(m => m.id === user.id);
-      if (member) setCurrentMember(member);
+      setCurrentMember({ id: user.id, name: user.name, color: user.color, emoji: user.emoji });
+    } else {
+      setCurrentMember(null);
     }
   }, [user?.id]);
 
@@ -35,16 +37,17 @@ function AppContent() {
     );
   }
 
-  if (!user) return <LoginPage />;
+  if (inviteToken) return <SignupPage token={inviteToken} />;
+  if (!user || !currentMember) return <LoginPage />;
 
   const renderPage = () => {
     switch (activeTab) {
-      case 'home':   return <HomePage currentMember={currentMember} onNavigate={(t) => setActiveTab(t as Tab)} />;
-      case 'budget': return <BudgetPage currentMember={currentMember} />;
-      case 'agenda': return <AgendaPage currentMember={currentMember} />;
-      case 'courses':return <CoursesPage currentMember={currentMember} />;
-      case 'todo':   return <TodoPage currentMember={currentMember} />;
-      default:       return null;
+      case 'home':    return <HomePage currentMember={currentMember} onNavigate={(t) => setActiveTab(t as Tab)} />;
+      case 'budget':  return <BudgetPage currentMember={currentMember} />;
+      case 'agenda':  return <AgendaPage currentMember={currentMember} />;
+      case 'courses': return <CoursesPage currentMember={currentMember} />;
+      case 'todo':    return <TodoPage currentMember={currentMember} />;
+      default:        return null;
     }
   };
 

@@ -50,7 +50,7 @@ async function main() {
   // Members endpoint
   app.get('/api/members', requireAuth, async (_req, res) => {
     const db = await getDb();
-    res.json(await db.all('SELECT id, name, color, emoji, email FROM members'));
+    res.json(await db.all('SELECT id, name, color, emoji, email, is_admin, (password_hash IS NOT NULL) as has_account FROM members'));
   });
 
   // Serve client build in production

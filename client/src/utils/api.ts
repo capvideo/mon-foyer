@@ -22,6 +22,14 @@ export const api = {
   // Members
   getMembers: () => req<any[]>('/members'),
 
+  // Auth (invite & register)
+  createInvite: (memberId: string, email: string) =>
+    req<{ inviteUrl: string; expiresAt: string }>('/auth/invite', { method: 'POST', body: JSON.stringify({ memberId, email }) }),
+  getInvite: (token: string) =>
+    req<{ memberId: string; name: string; color: string; emoji: string; email: string }>(`/auth/invite/${token}`),
+  register: (token: string, password: string) =>
+    req<{ token: string; member: any }>('/auth/register', { method: 'POST', body: JSON.stringify({ token, password }) }),
+
   // Accounts
   getAccounts: () => req<any[]>('/accounts'),
   createAccount: (data: any) => req<any>('/accounts', { method: 'POST', body: JSON.stringify(data) }),

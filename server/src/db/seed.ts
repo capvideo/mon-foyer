@@ -14,14 +14,15 @@ async function seed() {
     DELETE FROM events;
     DELETE FROM transactions;
     DELETE FROM accounts;
+    DELETE FROM invites;
     DELETE FROM members;
   `);
 
-  // Members (password: Foyer2026!)
+  // Members: José is admin with credentials; Anaïs and Lucas are invite-only
   const hash = await bcrypt.hash('Foyer2026!', 10);
-  await db.run("INSERT INTO members (id, name, color, emoji, email, password_hash) VALUES ('jose', 'José', '#378ADD', '👨', 'jose@monfoyer.fr', ?)", hash);
-  await db.run("INSERT INTO members (id, name, color, emoji, email, password_hash) VALUES ('anais', 'Anaïs', '#D4537E', '👩', 'anais@monfoyer.fr', ?)", hash);
-  await db.run("INSERT INTO members (id, name, color, emoji, email, password_hash) VALUES ('lucas', 'Lucas', '#639922', '🧒', 'lucas@monfoyer.fr', ?)", hash);
+  await db.run("INSERT INTO members (id, name, color, emoji, email, password_hash, is_admin) VALUES ('jose', 'José', '#378ADD', '👨', 'contact@cap-video.fr', ?, 1)", hash);
+  await db.run("INSERT INTO members (id, name, color, emoji) VALUES ('anais', 'Anaïs', '#D4537E', '👩')");
+  await db.run("INSERT INTO members (id, name, color, emoji) VALUES ('lucas', 'Lucas', '#639922', '🧒')");
 
   // Accounts (initial_balance calculé pour que solde final = LCL 2850€, SG 1340€)
   await db.run("INSERT INTO accounts (name, bank, initial_balance, color) VALUES ('LCL Principal', 'LCL', 1705.43, '#378ADD')");
