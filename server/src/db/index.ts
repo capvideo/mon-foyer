@@ -142,10 +142,19 @@ export async function initDb(): Promise<void> {
       p256dh TEXT NOT NULL,
       auth TEXT NOT NULL,
       created_at TEXT NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS invites (
+      token TEXT PRIMARY KEY,
+      member_id TEXT NOT NULL,
+      email TEXT NOT NULL,
+      created_by TEXT NOT NULL,
+      expires_at TEXT NOT NULL,
+      used_at TEXT
     )
   `);
-  // Migration: add auth columns to existing deployments
+  // Migrations
   await pool.query(`ALTER TABLE members ADD COLUMN IF NOT EXISTS email TEXT`);
   await pool.query(`ALTER TABLE members ADD COLUMN IF NOT EXISTS password_hash TEXT`);
+  await pool.query(`ALTER TABLE members ADD COLUMN IF NOT EXISTS is_admin INTEGER NOT NULL DEFAULT 0`);
   await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS members_email_idx ON members(email) WHERE email IS NOT NULL`);
 }
