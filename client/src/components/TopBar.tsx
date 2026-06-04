@@ -20,6 +20,7 @@ export function TopBar({ currentMember, onChangeMember, onOpenChat, unreadCount 
   const [inviteUrl, setInviteUrl] = useState('');
   const [inviteLoading, setInviteLoading] = useState(false);
   const [inviteError, setInviteError] = useState('');
+  const [emailSent, setEmailSent] = useState(false);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -36,6 +37,7 @@ export function TopBar({ currentMember, onChangeMember, onOpenChat, unreadCount 
       setInviteEmail('');
       setInviteUrl('');
       setInviteError('');
+      setEmailSent(false);
     }
   };
 
@@ -45,8 +47,9 @@ export function TopBar({ currentMember, onChangeMember, onOpenChat, unreadCount 
     setInviteLoading(true);
     setInviteError('');
     try {
-      const { inviteUrl: url } = await api.createInvite(inviteFor.id, inviteEmail);
+      const { inviteUrl: url, emailSent: sent } = await api.createInvite(inviteFor.id, inviteEmail);
       setInviteUrl(url);
+      setEmailSent(sent);
     } catch (err: any) {
       setInviteError(err.message ?? 'Erreur');
     } finally {
@@ -165,14 +168,22 @@ export function TopBar({ currentMember, onChangeMember, onOpenChat, unreadCount 
                   disabled={inviteLoading || !inviteEmail}
                   className="flex-1 py-2.5 rounded-xl bg-foyer-500 text-white text-sm font-medium disabled:opacity-60"
                 >
-                  {inviteLoading ? 'Création…' : 'Générer le lien'}
+                  {inviteLoading ? 'Envoi…' : "Envoyer l'invitation"}
                 </button>
               </div>
             </form>
           ) : (
             <div className="space-y-3">
-              <p className="text-sm text-green-600 font-medium">Lien créé !</p>
-              <p className="text-xs text-gray-500">Partagez ce lien avec {inviteFor.name} pour qu'il/elle crée son compte. Valable 7 jours.</p>
+              {emailSent ? (
+                <p className="text-sm text-green-600 font-medium">Invitation envoyée par email !</p>
+              ) : (
+                <p className="text-sm text-green-600 font-medium">Lien créé !</p>
+              )}
+              <p className="text-xs text-gray-500">
+                {emailSent
+                  ? `Un email a été envoyé à ${inviteEmail}. Vous pouvez aussi partager le lien manuellement :`
+                  : `Partagez ce lien avec ${inviteFor.name} pour qu'il/elle crée son compte. Valable 7 jours.`}
+              </p>
               <div className="bg-gray-50 rounded-xl p-3 text-xs text-gray-600 break-all">{inviteUrl}</div>
               <div className="flex gap-2">
                 <button

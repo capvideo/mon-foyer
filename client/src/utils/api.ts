@@ -24,7 +24,7 @@ export const api = {
 
   // Auth (invite & register)
   createInvite: (memberId: string, email: string) =>
-    req<{ inviteUrl: string; expiresAt: string }>('/auth/invite', { method: 'POST', body: JSON.stringify({ memberId, email }) }),
+    req<{ inviteUrl: string; expiresAt: string; emailSent: boolean }>('/auth/invite', { method: 'POST', body: JSON.stringify({ memberId, email }) }),
   getInvite: (token: string) =>
     req<{ memberId: string; name: string; color: string; emoji: string; email: string }>(`/auth/invite/${token}`),
   register: (token: string, password: string) =>

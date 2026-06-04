@@ -57,9 +57,9 @@ router.post('/invite', requireAuth, async (req: AuthRequest, res) => {
   const appUrl = process.env.APP_URL ?? 'http://localhost:5173';
   const inviteUrl = `${appUrl}/join?token=${token}`;
 
-  await sendInviteEmail(email, member.name, inviteUrl).catch(() => {}); // fire-and-forget
+  const emailSent = await sendInviteEmail(email, member.name, inviteUrl).catch(() => false);
 
-  res.json({ inviteUrl, expiresAt });
+  res.json({ inviteUrl, expiresAt, emailSent });
 });
 
 // Public: validate an invite token and return member preview
