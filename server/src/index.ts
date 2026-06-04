@@ -1,8 +1,18 @@
+import fs from 'fs';
 import express from 'express';
 import cors from 'cors';
 import http from 'http';
 import path from 'path';
 import { WebSocketServer } from 'ws';
+
+// Load .env in development (no dotenv dependency needed)
+const _envPath = path.resolve(process.cwd(), '.env');
+if (fs.existsSync(_envPath)) {
+  for (const line of fs.readFileSync(_envPath, 'utf8').split('\n')) {
+    const m = line.match(/^([^#\s][^=]*)=(.*)$/);
+    if (m) process.env[m[1].trim()] ??= m[2].trim();
+  }
+}
 
 import { initDb, getDb } from './db/index';
 import { setupWebSocket } from './websocket';
