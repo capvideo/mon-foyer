@@ -22,7 +22,7 @@ import { requireAuth } from './middleware/auth';
 import authRouter from './routes/auth';
 import accountsRouter from './routes/accounts';
 import transactionsRouter from './routes/transactions';
-import eventsRouter from './routes/events';
+import eventsRouter, { calendarIcsHandler } from './routes/events';
 import shoppingRouter from './routes/shopping';
 import todosRouter from './routes/todos';
 import chatRouter from './routes/chat';
@@ -51,6 +51,8 @@ async function main() {
 
   // Public routes
   app.use('/api/auth', authRouter);
+  // iCal feed — registered before requireAuth because iOS Calendar uses ?token= not Authorization header
+  app.get('/api/events/calendar.ics', calendarIcsHandler);
 
   // Protected API routes
   app.use('/api/accounts', requireAuth, accountsRouter);
