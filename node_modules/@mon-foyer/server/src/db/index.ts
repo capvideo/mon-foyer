@@ -197,6 +197,13 @@ export async function initDb(): Promise<void> {
   await pool.query(`ALTER TABLE members ADD COLUMN IF NOT EXISTS is_admin INTEGER NOT NULL DEFAULT 0`);
   await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS members_email_idx ON members(email) WHERE email IS NOT NULL`);
 
+  // Migration v1: clear demo shopping items seeded before June 2026
+  const migV1 = await db.get("SELECT value FROM app_settings WHERE key='migration_v1'") as any;
+  if (!migV1) {
+    await db.exec("DELETE FROM shopping_items");
+    await pool.query("INSERT INTO app_settings (key,value) VALUES ('migration_v1','done') ON CONFLICT(key) DO NOTHING");
+  }
+
   // Seed rental properties
   const propCount = await db.get('SELECT COUNT(*) as n FROM rental_properties') as any;
   if (Number(propCount?.n ?? 0) === 0) {
