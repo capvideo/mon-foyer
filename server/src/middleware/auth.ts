@@ -8,13 +8,18 @@ export interface AuthRequest extends Request {
 }
 
 export function requireAuth(req: AuthRequest, res: Response, next: NextFunction): void {
-  const header = req.headers.authorization;
-  if (!header?.startsWith('Bearer ')) {
+  // iCal subscription feeds embed the token in the URL (?token=) because calendar
+  // apps (Apple Calendar, Google Calendar) cannot send Authorization headers.
+  const isCalFeed = req.originalUrl.includes('/events/calendar.ics');
+  const token = (isCalFeed ? (req.query.token as string | undefined) : undefined)
+    ?? (req.headers.authorization?.startsWith('Bearer ') ? req.headers.authorization.slice(7) : undefined);
+
+  if (!token) {
     res.status(401).json({ error: 'Non authentifié' });
     return;
   }
   try {
-    req.user = jwt.verify(header.slice(7), JWT_SECRET) as AuthRequest['user'];
+    req.user = jwt.verify(token, JWT_SECRET) as AuthRequest['user'];
     next();
   } catch {
     res.status(401).json({ error: 'Token invalide ou expiré' });
