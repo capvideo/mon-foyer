@@ -4,12 +4,20 @@ import { MessageCircle, Bell, LogOut, UserPlus, Copy, Check } from 'lucide-react
 import { Member } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../utils/api';
+import { NotificationsPanel } from './NotificationsPanel';
 
 interface Props {
   currentMember: Member;
   onChangeMember: (m: Member) => void;
   onOpenChat: () => void;
   unreadCount?: number;
+}
+
+function hasUnreadNotifs(): boolean {
+  const seen = localStorage.getItem('notif_seen');
+  if (!seen) return true;
+  // Show dot if not checked in the last 30 minutes
+  return Date.now() - new Date(seen).getTime() > 30 * 60 * 1000;
 }
 
 export function TopBar({ currentMember, onChangeMember, onOpenChat, unreadCount = 0 }: Props) {
@@ -22,6 +30,8 @@ export function TopBar({ currentMember, onChangeMember, onOpenChat, unreadCount 
   const [inviteError, setInviteError] = useState('');
   const [emailSent, setEmailSent] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notifDot, setNotifDot] = useState(hasUnreadNotifs);
 
   useEffect(() => {
     api.getMembers().then(setMembers).catch(() => {});
@@ -63,149 +73,168 @@ export function TopBar({ currentMember, onChangeMember, onOpenChat, unreadCount 
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleBell = () => {
+    setShowNotifications(v => !v);
+    setNotifDot(false);
+  };
+
   return (
     <>
-    <header className="fixed top-0 left-0 right-0 z-40 bg-white border-b border-gray-100 safe-area-pt">
-      <div className="flex items-center justify-between px-4 h-14">
-        {/* Logo */}
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl bg-foyer-500 flex items-center justify-center">
-            <span className="text-white text-sm">🏠</span>
-          </div>
-          <span className="font-bold text-gray-800 text-lg">Mon Foyer</span>
-        </div>
+      <header className="fixed top-0 left-0 right-0 z-40 bg-white border-b border-gray-100 safe-area-pt">
+        <div className="flex items-center justify-between px-3 h-14">
 
-        {/* Member selector */}
-        <div className="flex items-center gap-1.5">
-          {members.map(m => (
+          {/* Logo — text hidden on very small screens to save space */}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="w-8 h-8 rounded-xl bg-foyer-500 flex items-center justify-center">
+              <span className="text-white text-sm">🏠</span>
+            </div>
+            <span className="font-bold text-gray-800 text-base hidden sm:block">Mon Foyer</span>
+          </div>
+
+          {/* Member selector */}
+          <div className="flex items-center gap-1.5">
+            {members.map(m => (
+              <button
+                key={m.id}
+                onClick={() => handleMemberClick(m)}
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm transition-all flex-shrink-0 ${
+                  currentMember.id === m.id
+                    ? 'ring-2 ring-offset-1 scale-110'
+                    : m.has_account
+                    ? 'opacity-60 hover:opacity-80'
+                    : isAdmin ? 'opacity-40 hover:opacity-60' : 'opacity-20 cursor-default'
+                }`}
+                style={{ backgroundColor: m.color, '--tw-ring-color': m.color } as React.CSSProperties}
+                title={m.has_account ? m.name : `${m.name} — ${isAdmin ? 'cliquer pour inviter' : 'pas encore inscrit'}`}
+              >
+                {m.has_account
+                  ? m.emoji
+                  : isAdmin
+                  ? <UserPlus size={13} className="text-white" />
+                  : m.emoji}
+              </button>
+            ))}
+          </div>
+
+          {/* Actions */}
+          <div className="flex items-center gap-1 flex-shrink-0">
             <button
-              key={m.id}
-              onClick={() => handleMemberClick(m)}
-              className={`w-8 h-8 rounded-full flex items-center justify-center text-sm transition-all ${
-                currentMember.id === m.id
-                  ? 'ring-2 ring-offset-1 scale-110'
-                  : m.has_account
-                  ? 'opacity-60 hover:opacity-80'
-                  : isAdmin ? 'opacity-40 hover:opacity-60' : 'opacity-20 cursor-default'
-              }`}
-              style={{ backgroundColor: m.color, '--tw-ring-color': m.color } as React.CSSProperties}
-              title={m.has_account ? m.name : `${m.name} — ${isAdmin ? 'cliquer pour inviter' : 'pas encore inscrit'}`}
+              onClick={onOpenChat}
+              className="relative w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
             >
-              {m.has_account
-                ? m.emoji
-                : isAdmin
-                ? <UserPlus size={13} className="text-white" />
-                : m.emoji}
-            </button>
-          ))}
-        </div>
-
-        {/* Actions */}
-        <div className="flex items-center gap-2">
-          <button
-            onClick={onOpenChat}
-            className="relative w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
-          >
-            <MessageCircle size={20} className="text-gray-600" />
-            {unreadCount > 0 && (
-              <span className="absolute top-0.5 right-0.5 w-4 h-4 bg-foyer-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
-                {unreadCount > 9 ? '9+' : unreadCount}
-              </span>
-            )}
-          </button>
-          <button className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors">
-            <Bell size={20} className="text-gray-600" />
-          </button>
-          <button
-            onClick={logout}
-            className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
-            title="Se déconnecter"
-          >
-            <LogOut size={18} className="text-gray-400" />
-          </button>
-        </div>
-      </div>
-
-    </header>
-
-    {inviteFor && createPortal(
-      <div
-        className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center px-4"
-        onClick={() => setInviteFor(null)}
-      >
-        <div className="bg-white rounded-2xl p-5 w-full max-w-sm shadow-xl" onClick={e => e.stopPropagation()}>
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-full flex items-center justify-center text-lg flex-shrink-0" style={{ backgroundColor: inviteFor.color }}>
-              {inviteFor.emoji}
-            </div>
-            <div>
-              <h3 className="font-bold text-gray-800">Inviter {inviteFor.name}</h3>
-              <p className="text-xs text-gray-400">Créer un lien d'inscription</p>
-            </div>
-          </div>
-
-          {!inviteUrl ? (
-            <form onSubmit={handleInvite} className="space-y-3">
-              <input
-                type="email"
-                value={inviteEmail}
-                onChange={e => setInviteEmail(e.target.value)}
-                placeholder={`Email de ${inviteFor.name}`}
-                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-foyer-400"
-                autoFocus
-              />
-              {inviteError && <p className="text-red-500 text-xs">{inviteError}</p>}
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => setInviteFor(null)}
-                  className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-600"
-                >
-                  Annuler
-                </button>
-                <button
-                  type="submit"
-                  disabled={inviteLoading || !inviteEmail}
-                  className="flex-1 py-2.5 rounded-xl bg-foyer-500 text-white text-sm font-medium disabled:opacity-60"
-                >
-                  {inviteLoading ? 'Envoi…' : "Envoyer l'invitation"}
-                </button>
-              </div>
-            </form>
-          ) : (
-            <div className="space-y-3">
-              {emailSent ? (
-                <p className="text-sm text-green-600 font-medium">Invitation envoyée par email !</p>
-              ) : (
-                <p className="text-sm text-green-600 font-medium">Lien créé !</p>
+              <MessageCircle size={20} className="text-gray-600" />
+              {unreadCount > 0 && (
+                <span className="absolute top-0.5 right-0.5 w-4 h-4 bg-foyer-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
               )}
-              <p className="text-xs text-gray-500">
-                {emailSent
-                  ? `Un email a été envoyé à ${inviteEmail}. Vous pouvez aussi partager le lien manuellement :`
-                  : `Partagez ce lien avec ${inviteFor.name} pour qu'il/elle crée son compte. Valable 7 jours.`}
-              </p>
-              <div className="bg-gray-50 rounded-xl p-3 text-xs text-gray-600 break-all">{inviteUrl}</div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setInviteFor(null)}
-                  className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-600"
-                >
-                  Fermer
-                </button>
-                <button
-                  onClick={handleCopy}
-                  className="flex-1 py-2.5 rounded-xl bg-foyer-500 text-white text-sm font-medium flex items-center justify-center gap-1.5"
-                >
-                  {copied ? <Check size={14} /> : <Copy size={14} />}
-                  {copied ? 'Copié !' : 'Copier'}
-                </button>
+            </button>
+
+            {/* Bell with notifications panel */}
+            <div className="relative">
+              <button
+                onClick={handleBell}
+                className="relative w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
+              >
+                <Bell size={20} className={showNotifications ? 'text-foyer-500' : 'text-gray-600'} />
+                {notifDot && (
+                  <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
+                )}
+              </button>
+              {showNotifications && (
+                <NotificationsPanel onClose={() => setShowNotifications(false)} />
+              )}
+            </div>
+
+            <button
+              onClick={logout}
+              className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
+              title="Se déconnecter"
+            >
+              <LogOut size={18} className="text-gray-400" />
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {inviteFor && createPortal(
+        <div
+          className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center px-4"
+          onClick={() => setInviteFor(null)}
+        >
+          <div className="bg-white rounded-2xl p-5 w-full max-w-sm shadow-xl" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full flex items-center justify-center text-lg flex-shrink-0" style={{ backgroundColor: inviteFor.color }}>
+                {inviteFor.emoji}
+              </div>
+              <div>
+                <h3 className="font-bold text-gray-800">Inviter {inviteFor.name}</h3>
+                <p className="text-xs text-gray-400">Créer un lien d'inscription</p>
               </div>
             </div>
-          )}
-        </div>
-      </div>,
-      document.body
-    )}
+
+            {!inviteUrl ? (
+              <form onSubmit={handleInvite} className="space-y-3">
+                <input
+                  type="email"
+                  value={inviteEmail}
+                  onChange={e => setInviteEmail(e.target.value)}
+                  placeholder={`Email de ${inviteFor.name}`}
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-foyer-400"
+                  autoFocus
+                />
+                {inviteError && <p className="text-red-500 text-xs">{inviteError}</p>}
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setInviteFor(null)}
+                    className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-600"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={inviteLoading || !inviteEmail}
+                    className="flex-1 py-2.5 rounded-xl bg-foyer-500 text-white text-sm font-medium disabled:opacity-60"
+                  >
+                    {inviteLoading ? 'Envoi…' : "Envoyer l'invitation"}
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <div className="space-y-3">
+                {emailSent ? (
+                  <p className="text-sm text-green-600 font-medium">Invitation envoyée par email !</p>
+                ) : (
+                  <p className="text-sm text-green-600 font-medium">Lien créé !</p>
+                )}
+                <p className="text-xs text-gray-500">
+                  {emailSent
+                    ? `Un email a été envoyé à ${inviteEmail}. Vous pouvez aussi partager le lien manuellement :`
+                    : `Partagez ce lien avec ${inviteFor.name} pour qu'il/elle crée son compte. Valable 7 jours.`}
+                </p>
+                <div className="bg-gray-50 rounded-xl p-3 text-xs text-gray-600 break-all">{inviteUrl}</div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setInviteFor(null)}
+                    className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-600"
+                  >
+                    Fermer
+                  </button>
+                  <button
+                    onClick={handleCopy}
+                    className="flex-1 py-2.5 rounded-xl bg-foyer-500 text-white text-sm font-medium flex items-center justify-center gap-1.5"
+                  >
+                    {copied ? <Check size={14} /> : <Copy size={14} />}
+                    {copied ? 'Copié !' : 'Copier'}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>,
+        document.body
+      )}
     </>
   );
 }

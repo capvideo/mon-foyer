@@ -109,4 +109,7 @@ export const api = {
   getVapidKey: () => req<{ key: string }>('/push/vapid-public'),
   subscribePush: (memberId: string, subscription: any) =>
     req<any>('/push/subscribe', { method: 'POST', body: JSON.stringify({ memberId, subscription }) }),
+
+  // Notifications
+  getNotifications: () => req<Array<{ icon: string; text: string; ts: string }>>('/notifications'),
 };

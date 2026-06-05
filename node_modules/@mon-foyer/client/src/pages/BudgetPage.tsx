@@ -278,16 +278,18 @@ export function BudgetPage({ currentMember }: Props) {
         {isMonthlyMode && (
           <button
             onClick={() => setShowRecurring(true)}
-            className="flex items-center justify-center gap-2 bg-white border border-gray-200 text-gray-600 rounded-xl px-3 py-2.5 text-sm font-medium hover:bg-gray-50 transition-colors"
+            className="flex items-center justify-center gap-1.5 bg-white border border-gray-200 text-gray-600 rounded-xl px-3 py-2.5 text-sm font-medium hover:bg-gray-50 transition-colors"
           >
-            <RefreshCw size={16} /> Récurrents
+            <RefreshCw size={16} />
+            <span className="hidden sm:inline">Récurrents</span>
           </button>
         )}
         <button
           onClick={() => setShowCsv(true)}
-          className="flex items-center justify-center gap-2 bg-white border border-gray-200 text-gray-600 rounded-xl px-4 py-2.5 text-sm font-medium hover:bg-gray-50 transition-colors"
+          className="flex items-center justify-center gap-1.5 bg-white border border-gray-200 text-gray-600 rounded-xl px-3 py-2.5 text-sm font-medium hover:bg-gray-50 transition-colors"
         >
-          <Upload size={16} /> CSV
+          <Upload size={16} />
+          <span className="hidden sm:inline">CSV</span>
         </button>
       </div>
 

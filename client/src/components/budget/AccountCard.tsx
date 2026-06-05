@@ -11,9 +11,9 @@ interface Props {
 }
 
 function getNotification(balance: number): { msg: string; bg: string } {
-  if (balance > 100) return { msg: "Bravo ! Vous gérez super bien votre budget ce mois-ci 🎉", bg: 'bg-green-500/20' };
-  if (balance >= 0) return { msg: "Attention, le mois est encore long... quelques ajustements seraient bienvenus 💡", bg: 'bg-yellow-500/20' };
-  return { msg: "Oups ! Votre compte est dans le rouge, pensez à revoir vos dépenses 🚨", bg: 'bg-red-500/20' };
+  if (balance > 100) return { msg: 'Bon mois ! 🎉', bg: 'bg-green-500/20' };
+  if (balance >= 0) return { msg: 'Quelques ajustements 💡', bg: 'bg-yellow-500/20' };
+  return { msg: 'Dans le rouge 🚨', bg: 'bg-red-500/20' };
 }
 
 export function AccountCard({ account, income, expense, showNotification, onClick, active }: Props) {

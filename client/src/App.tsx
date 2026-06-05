@@ -66,7 +66,13 @@ function AppContent() {
         onChangeMember={setCurrentMember}
         onOpenChat={() => setChatOpen(true)}
       />
-      <main className="flex-1 overflow-y-auto pt-14 pb-20">
+      <main
+        className="flex-1 overflow-y-auto"
+        style={{
+          paddingTop: 'calc(3.5rem + env(safe-area-inset-top, 0px))',
+          paddingBottom: 'calc(4.5rem + env(safe-area-inset-bottom, 0px))',
+        }}
+      >
         <div className="max-w-lg mx-auto px-4 py-4">
           {renderPage()}
         </div>

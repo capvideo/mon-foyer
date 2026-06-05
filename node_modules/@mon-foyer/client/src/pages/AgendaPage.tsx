@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Plus, ChevronLeft, ChevronRight, Download, ExternalLink, Link, Check } from 'lucide-react';
+import { Plus, ChevronLeft, ChevronRight, Download, ExternalLink, Link, Check, Edit2, Trash2 } from 'lucide-react';
 import { api } from '../utils/api';
 import { Event, Member, MEMBERS, formatDate } from '../types';
 import { MonthGrid } from '../components/agenda/MonthGrid';
@@ -235,36 +235,36 @@ function EventCard({ event, onEdit, onDelete }: { event: Event; onEdit: () => vo
   };
 
   return (
-    <div className="flex items-start gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors">
+    <div className="flex items-start gap-2 p-3 rounded-xl hover:bg-gray-50 transition-colors">
       <div
         className="w-3 h-3 rounded-full mt-1.5 flex-shrink-0"
         style={{ backgroundColor: event.color }}
       />
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-gray-800">{event.title}</p>
-        <p className="text-xs text-gray-400">
+        <p className="text-sm font-medium text-gray-800 truncate">{event.title}</p>
+        <p className="text-xs text-gray-400 truncate">
           {event.time ? `${event.time}${event.end_time ? ` – ${event.end_time}` : ''}` : 'Toute la journée'}
           {event.location ? ` · 📍 ${event.location}` : ''}
         </p>
         {event.description && (
-          <p className="text-xs text-gray-500 mt-0.5">{event.description}</p>
+          <p className="text-xs text-gray-500 mt-0.5 truncate">{event.description}</p>
         )}
-        <div className="flex items-center gap-2 mt-1">
+        <div className="flex items-center gap-1 mt-1">
           {event.memberIds.map(id => <MemberAvatar key={id} memberId={id} size="xs" />)}
         </div>
       </div>
-      <div className="flex gap-1">
+      <div className="flex gap-0.5 flex-shrink-0">
         <button onClick={handleDownloadIcs} className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100" title="Télécharger .ics">
           <Download size={13} />
         </button>
         <button onClick={handleGoogleCalendar} className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100" title="Google Calendar">
           <ExternalLink size={13} />
         </button>
-        <button onClick={onEdit} className="text-xs text-foyer-500 px-2 py-1 rounded-lg hover:bg-foyer-50">
-          Modifier
+        <button onClick={onEdit} className="w-7 h-7 flex items-center justify-center rounded-lg text-foyer-500 hover:bg-foyer-50" title="Modifier">
+          <Edit2 size={13} />
         </button>
-        <button onClick={() => onDelete(event.id)} className="text-xs text-red-400 px-2 py-1 rounded-lg hover:bg-red-50">
-          ✕
+        <button onClick={() => onDelete(event.id)} className="w-7 h-7 flex items-center justify-center rounded-lg text-red-400 hover:bg-red-50" title="Supprimer">
+          <Trash2 size={13} />
         </button>
       </div>
     </div>
