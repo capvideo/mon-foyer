@@ -54,7 +54,8 @@ router.post('/invite', requireAuth, async (req: AuthRequest, res) => {
     token, memberId, email.toLowerCase().trim(), req.user!.memberId, expiresAt
   );
 
-  const appUrl = process.env.APP_URL ?? 'http://localhost:5173';
+  const proto = (req.get('x-forwarded-proto') as string | undefined) ?? req.protocol;
+  const appUrl = process.env.APP_URL ?? `${proto}://${req.get('host')}`;
   const inviteUrl = `${appUrl}/join?token=${token}`;
 
   const emailSent = await sendInviteEmail(email, member.name, inviteUrl);
