@@ -102,7 +102,7 @@ export interface Message {
 export const MEMBERS: Member[] = [
   { id: 'jose', name: 'José', color: '#378ADD', emoji: '👨' },
   { id: 'anais', name: 'Anaïs', color: '#D4537E', emoji: '👩' },
-  { id: 'lucas', name: 'Lucas', color: '#639922', emoji: '🧒' },
+  { id: 'invite', name: 'Invité', color: '#9E9E9E', emoji: '👤' },
 ];
 
 export const SHOPPING_CATEGORIES = [

@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Member } from './types';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { useNotifications } from './hooks/useNotifications';
 import { LoginPage } from './pages/LoginPage';
 import { SignupPage } from './pages/SignupPage';
 import { TopBar } from './components/TopBar';
@@ -20,12 +21,19 @@ function AppContent() {
   const [currentMember, setCurrentMember] = useState<Member | null>(null);
   const [chatOpen, setChatOpen] = useState(false);
   const [inviteToken] = useState(() => new URLSearchParams(window.location.search).get('token'));
+  const { subscribe } = useNotifications();
+  const subscribedRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (user) {
       setCurrentMember({ id: user.id, name: user.name, color: user.color, emoji: user.emoji });
+      if (subscribedRef.current !== user.id) {
+        subscribedRef.current = user.id;
+        subscribe(user.id).catch(() => {});
+      }
     } else {
       setCurrentMember(null);
+      subscribedRef.current = null;
     }
   }, [user?.id]);
 
