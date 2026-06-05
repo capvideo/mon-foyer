@@ -71,15 +71,6 @@ async function main() {
     res.json(await db.all('SELECT id, name, color, emoji, email, is_admin, (password_hash IS NOT NULL) as has_account FROM members'));
   });
 
-  // Serve client build only when the dist folder is present (not on separate-host deployments)
-  const clientDist = path.join(__dirname, '../../client/dist');
-  if (fs.existsSync(clientDist)) {
-    app.use(express.static(clientDist));
-    app.get('*', (_req, res) => {
-      res.sendFile(path.join(clientDist, 'index.html'));
-    });
-  }
-
   // WebSocket
   const wss = new WebSocketServer({ server, path: '/ws' });
   setupWebSocket(wss);
