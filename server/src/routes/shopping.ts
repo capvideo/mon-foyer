@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { getDb } from '../db/index';
+import { sendPushToAll } from '../utils/push';
 
 const router = Router();
 
@@ -15,7 +16,9 @@ router.post('/', async (req, res) => {
     'INSERT INTO shopping_items (name,category,quantity,unit,checked,added_by,created_at) VALUES (?,?,?,?,0,?,?)',
     name, category, quantity || null, unit || null, addedBy || null, new Date().toISOString()
   );
-  res.status(201).json(await db.get('SELECT * FROM shopping_items WHERE id = ?', r.lastID));
+  const item = await db.get('SELECT * FROM shopping_items WHERE id = ?', r.lastID);
+  sendPushToAll({ title: '🛒 Liste de courses', body: `${name} ajouté`, url: '/?tab=courses' }, addedBy as string).catch(() => {});
+  res.status(201).json(item);
 });
 
 // NOTE: /checked/all must come before /:id

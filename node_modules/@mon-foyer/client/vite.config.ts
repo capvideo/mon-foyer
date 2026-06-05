@@ -7,7 +7,10 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icons/*.png'],
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.ts',
+      includeAssets: ['icons/*.png', 'icons/*.svg'],
       manifest: {
         name: 'Mon Foyer',
         short_name: 'Foyer',
@@ -17,19 +20,13 @@ export default defineConfig({
         display: 'standalone',
         start_url: '/',
         icons: [
+          { src: '/icons/icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any maskable' },
           { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
           { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
         ],
       },
-      workbox: {
+      injectManifest: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
-        runtimeCaching: [
-          {
-            urlPattern: /^http:\/\/localhost:3001\/api\/.*/,
-            handler: 'NetworkFirst',
-            options: { cacheName: 'api-cache' },
-          },
-        ],
       },
     }),
   ],

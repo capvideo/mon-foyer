@@ -2,6 +2,7 @@ import { Router } from 'express';
 import jwt from 'jsonwebtoken';
 import { getDb } from '../db/index';
 import { JWT_SECRET } from '../middleware/auth';
+import { sendPushToAll } from '../utils/push';
 
 const router = Router();
 
@@ -88,6 +89,7 @@ router.post('/', async (req, res) => {
     color || '#378ADD', location || null, reminderMinutes || null
   );
   const e = await db.get<any>('SELECT * FROM events WHERE id = ?', r.lastID);
+  sendPushToAll({ title: '📅 Nouvel événement', body: `${title} — ${date}`, url: '/?tab=agenda' }).catch(() => {});
   res.status(201).json({ ...e, memberIds: JSON.parse(e.member_ids) });
 });
 
@@ -101,6 +103,7 @@ router.put('/:id', async (req, res) => {
     color || '#378ADD', location || null, reminderMinutes || null, req.params.id
   );
   const e = await db.get<any>('SELECT * FROM events WHERE id = ?', req.params.id);
+  sendPushToAll({ title: '📅 Événement modifié', body: `${title}`, url: '/?tab=agenda' }).catch(() => {});
   res.json({ ...e, memberIds: JSON.parse(e.member_ids) });
 });
 

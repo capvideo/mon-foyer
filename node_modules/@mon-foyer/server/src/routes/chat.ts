@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { getDb } from '../db/index';
+import { sendPushToAll } from '../utils/push';
 
 const router = Router();
 
@@ -37,7 +38,9 @@ router.post('/channels/:id/messages', async (req, res) => {
     req.params.id, memberId, content, type || 'text',
     new Date().toISOString(), metadata ? JSON.stringify(metadata) : null
   );
-  res.status(201).json(await db.get('SELECT * FROM messages WHERE id = ?', r.lastID));
+  const msg = await db.get('SELECT * FROM messages WHERE id = ?', r.lastID);
+  sendPushToAll({ title: '💬 Nouveau message', body: (content as string).slice(0, 120), url: '/' }, memberId as string).catch(() => {});
+  res.status(201).json(msg);
 });
 
 export default router;

@@ -185,6 +185,10 @@ export async function initDb(): Promise<void> {
       copro_charges TEXT NOT NULL DEFAULT '[]',
       agence_charges TEXT NOT NULL DEFAULT '[]',
       UNIQUE(property_id, month)
+    );
+    CREATE TABLE IF NOT EXISTS app_settings (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL
     )
   `);
   // Migrations

@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { getDb } from '../db/index';
+import { sendPushToAll, sendPushToMember } from '../utils/push';
 
 const router = Router();
 
@@ -25,7 +26,13 @@ router.post('/', async (req, res) => {
     title, description || null, priority || 'normal', assignedTo || null,
     status || 'pending', dueDate || null, eventId || null, new Date().toISOString()
   );
-  res.status(201).json(await db.get('SELECT * FROM todos WHERE id = ?', r.lastID));
+  const todo = await db.get('SELECT * FROM todos WHERE id = ?', r.lastID);
+  if (assignedTo) {
+    sendPushToMember(assignedTo as string, { title: '✅ Nouvelle tâche assignée', body: title as string, url: '/?tab=todo' }).catch(() => {});
+  } else {
+    sendPushToAll({ title: '✅ Nouvelle tâche', body: title as string, url: '/?tab=todo' }).catch(() => {});
+  }
+  res.status(201).json(todo);
 });
 
 router.put('/:id', async (req, res) => {

@@ -1,12 +1,11 @@
 import { Router } from 'express';
 import { getDb } from '../db/index';
+import { getVapidPublicKey } from '../utils/push';
 
 const router = Router();
 
-const VAPID_PUBLIC = process.env.VAPID_PUBLIC || 'BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U';
-
 router.get('/vapid-public', (_req, res) => {
-  res.json({ key: VAPID_PUBLIC });
+  res.json({ key: getVapidPublicKey() });
 });
 
 router.post('/subscribe', async (req, res) => {
