@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Plus, Upload, Filter, BarChart2, PieChart as PieIcon, Home } from 'lucide-react';
+import { Plus, Upload, Filter, BarChart2, PieChart as PieIcon, Home, RefreshCw } from 'lucide-react';
 import { api } from '../utils/api';
 import { Account, Transaction, Member, formatAmount } from '../types';
 import { AccountCard } from '../components/budget/AccountCard';
@@ -8,9 +8,17 @@ import { TransactionForm } from '../components/budget/TransactionForm';
 import { RentalBlock } from '../components/budget/RentalBlock';
 import { CSVImport } from '../components/budget/CSVImport';
 import { BudgetChart } from '../components/budget/BudgetChart';
+import { RecurringTransactionsModal } from '../components/budget/RecurringTransactionsModal';
 import { parseCsv } from '../utils/csvParser';
 
 interface Props { currentMember: Member }
+
+const MONTHLY_MODE_FROM = '2026-06';
+
+function currentMonth(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+}
 
 export function BudgetPage({ currentMember }: Props) {
   const [accounts, setAccounts] = useState<Account[]>([]);
@@ -18,15 +26,18 @@ export function BudgetPage({ currentMember }: Props) {
   const [selectedAccount, setSelectedAccount] = useState<number | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [showCsv, setShowCsv] = useState(false);
+  const [showRecurring, setShowRecurring] = useState(false);
   const [editTx, setEditTx] = useState<Transaction | null>(null);
   const [chartView, setChartView] = useState<'bar' | 'pie'>('bar');
   const [showRental, setShowRental] = useState(false);
   const [filter, setFilter] = useState<'all' | 'income' | 'expense'>('all');
-  const [month, setMonth] = useState('2026-05');
+  const [month, setMonth] = useState(currentMonth);
+
+  const isMonthlyMode = month >= MONTHLY_MODE_FROM;
 
   const load = async () => {
     const [accs, txs] = await Promise.all([
-      api.getAccounts(),
+      api.getAccounts(isMonthlyMode ? month : undefined),
       api.getTransactions({ month }),
     ]);
     setAccounts(accs);
@@ -98,7 +109,7 @@ export function BudgetPage({ currentMember }: Props) {
 
       {/* Total balance */}
       <div className="bg-gradient-to-r from-foyer-500 to-foyer-600 rounded-2xl p-4 text-white">
-        <p className="text-white/70 text-xs">Solde total</p>
+        <p className="text-white/70 text-xs">{isMonthlyMode ? 'Solde total du mois' : 'Solde total'}</p>
         <p className="text-3xl font-bold">{formatAmount(totalBalance)}</p>
         {pendingCount > 0 && (
           <p className="text-white/70 text-xs mt-1">⏳ {pendingCount} transaction(s) en attente</p>
@@ -115,6 +126,7 @@ export function BudgetPage({ currentMember }: Props) {
               account={acc}
               income={stats.income}
               expense={stats.expense}
+              showNotification={isMonthlyMode}
               active={selectedAccount === acc.id}
               onClick={() => setSelectedAccount(selectedAccount === acc.id ? null : acc.id)}
             />
@@ -170,6 +182,14 @@ export function BudgetPage({ currentMember }: Props) {
         >
           <Plus size={16} /> Ajouter
         </button>
+        {isMonthlyMode && (
+          <button
+            onClick={() => setShowRecurring(true)}
+            className="flex items-center justify-center gap-2 bg-white border border-gray-200 text-gray-600 rounded-xl px-3 py-2.5 text-sm font-medium hover:bg-gray-50 transition-colors"
+          >
+            <RefreshCw size={16} /> Récurrents
+          </button>
+        )}
         <button
           onClick={() => setShowCsv(true)}
           className="flex items-center justify-center gap-2 bg-white border border-gray-200 text-gray-600 rounded-xl px-4 py-2.5 text-sm font-medium hover:bg-gray-50 transition-colors"
@@ -225,6 +245,14 @@ export function BudgetPage({ currentMember }: Props) {
         onClose={() => setShowCsv(false)}
         accounts={accounts}
         onImport={handleImportCsv}
+      />
+
+      <RecurringTransactionsModal
+        open={showRecurring}
+        onClose={() => setShowRecurring(false)}
+        accounts={accounts}
+        month={month}
+        onApplied={load}
       />
     </div>
   );

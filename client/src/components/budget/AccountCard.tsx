@@ -5,13 +5,21 @@ interface Props {
   account: Account;
   income: number;
   expense: number;
+  showNotification?: boolean;
   onClick?: () => void;
   active?: boolean;
 }
 
-export function AccountCard({ account, income, expense, onClick, active }: Props) {
+function getNotification(balance: number): { msg: string; bg: string } {
+  if (balance > 100) return { msg: "Bravo ! Vous gérez super bien votre budget ce mois-ci 🎉", bg: 'bg-green-500/20' };
+  if (balance >= 0) return { msg: "Attention, le mois est encore long... quelques ajustements seraient bienvenus 💡", bg: 'bg-yellow-500/20' };
+  return { msg: "Oups ! Votre compte est dans le rouge, pensez à revoir vos dépenses 🚨", bg: 'bg-red-500/20' };
+}
+
+export function AccountCard({ account, income, expense, showNotification, onClick, active }: Props) {
   const balance = account.balance;
   const isLow = balance < 300;
+  const notif = showNotification ? getNotification(balance) : null;
 
   return (
     <button
@@ -29,7 +37,7 @@ export function AccountCard({ account, income, expense, onClick, active }: Props
           <p className="text-white/80 text-xs font-medium uppercase tracking-wide">{account.bank}</p>
           <p className="text-white font-semibold text-sm mt-0.5">{account.name}</p>
         </div>
-        {isLow && (
+        {isLow && !notif && (
           <span className="bg-white/20 text-white text-xs px-2 py-0.5 rounded-full font-medium">
             ⚠️ Bas
           </span>
@@ -37,11 +45,17 @@ export function AccountCard({ account, income, expense, onClick, active }: Props
       </div>
 
       <div className="mt-2">
-        <p className="text-white/70 text-xs">Solde disponible</p>
-        <p className={`text-white font-bold text-2xl ${isLow ? 'text-yellow-200' : ''}`}>
+        <p className="text-white/70 text-xs">Solde du mois</p>
+        <p className={`text-white font-bold text-2xl ${isLow && !notif ? 'text-yellow-200' : ''}`}>
           {formatAmount(balance)}
         </p>
       </div>
+
+      {notif && (
+        <div className={`mt-2 px-2.5 py-1.5 rounded-xl ${notif.bg}`}>
+          <p className="text-white text-xs leading-snug">{notif.msg}</p>
+        </div>
+      )}
 
       <div className="flex items-center gap-3 mt-3 pt-3 border-t border-white/20">
         <div className="flex items-center gap-1">

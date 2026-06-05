@@ -150,6 +150,23 @@ export async function initDb(): Promise<void> {
       created_by TEXT NOT NULL,
       expires_at TEXT NOT NULL,
       used_at TEXT
+    );
+    CREATE TABLE IF NOT EXISTS monthly_balances (
+      account_id INTEGER NOT NULL,
+      month TEXT NOT NULL,
+      opening_balance REAL NOT NULL DEFAULT 0,
+      PRIMARY KEY (account_id, month)
+    );
+    CREATE TABLE IF NOT EXISTS recurring_transactions (
+      id SERIAL PRIMARY KEY,
+      label TEXT NOT NULL,
+      amount REAL NOT NULL,
+      type TEXT NOT NULL,
+      category TEXT NOT NULL,
+      default_account_id INTEGER,
+      default_day INTEGER NOT NULL DEFAULT 1,
+      active INTEGER NOT NULL DEFAULT 1,
+      notes TEXT
     )
   `);
   // Migrations

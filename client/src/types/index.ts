@@ -15,6 +15,19 @@ export interface Account {
   initial_balance: number;
   color: string;
   balance: number;
+  opening_balance?: number;
+}
+
+export interface RecurringTransaction {
+  id: number;
+  label: string;
+  amount: number;
+  type: 'income' | 'expense';
+  category: string;
+  default_account_id: number | null;
+  default_day: number;
+  active: number;
+  notes: string | null;
 }
 
 export interface Transaction {

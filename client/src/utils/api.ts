@@ -31,9 +31,19 @@ export const api = {
     req<{ token: string; member: any }>('/auth/register', { method: 'POST', body: JSON.stringify({ token, password }) }),
 
   // Accounts
-  getAccounts: () => req<any[]>('/accounts'),
+  getAccounts: (month?: string) => req<any[]>(`/accounts${month ? `?month=${month}` : ''}`),
   createAccount: (data: any) => req<any>('/accounts', { method: 'POST', body: JSON.stringify(data) }),
   updateAccount: (id: number, data: any) => req<any>(`/accounts/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  setMonthlyBalance: (accountId: number, month: string, opening_balance: number) =>
+    req<any>(`/accounts/${accountId}/monthly-balance`, { method: 'POST', body: JSON.stringify({ month, opening_balance }) }),
+
+  // Recurring transactions
+  getRecurring: () => req<any[]>('/recurring'),
+  createRecurring: (data: any) => req<any>('/recurring', { method: 'POST', body: JSON.stringify(data) }),
+  updateRecurring: (id: number, data: any) => req<any>(`/recurring/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteRecurring: (id: number) => req<any>(`/recurring/${id}`, { method: 'DELETE' }),
+  applyRecurring: (selections: any[]) =>
+    req<any>('/recurring/apply', { method: 'POST', body: JSON.stringify({ selections }) }),
 
   // Transactions
   getTransactions: (params?: Record<string, string>) => {
