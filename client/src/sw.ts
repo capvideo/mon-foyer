@@ -9,6 +9,10 @@ declare const self: ServiceWorkerGlobalScope;
 cleanupOutdatedCaches();
 precacheAndRoute(self.__WB_MANIFEST);
 
+// Take control immediately on install so stale cached builds are replaced right away
+self.addEventListener('install', () => self.skipWaiting());
+self.addEventListener('activate', (event) => event.waitUntil(self.clients.claim()));
+
 // Navigation fallback (SPA)
 registerRoute(
   new NavigationRoute(createHandlerBoundToURL('index.html'))

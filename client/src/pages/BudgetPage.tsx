@@ -41,6 +41,13 @@ export function BudgetPage({ currentMember }: Props) {
   const isMonthlyMode = month >= MONTHLY_MODE_FROM;
   const isSetupMonth = month === SETUP_MONTH;
 
+  // Reset to current month when app comes back to foreground (iOS PWA keeps component alive in background)
+  useEffect(() => {
+    const sync = () => { if (document.visibilityState === 'visible') setMonth(currentMonth()); };
+    document.addEventListener('visibilitychange', sync);
+    return () => document.removeEventListener('visibilitychange', sync);
+  }, []);
+
   const load = async () => {
     const [accs, txs] = await Promise.all([
       api.getAccounts(isMonthlyMode ? month : undefined),
