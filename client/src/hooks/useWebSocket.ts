@@ -6,6 +6,13 @@ interface UseWebSocketOptions {
   memberId?: string;
 }
 
+function getWsUrl(): string {
+  if (import.meta.env.DEV) return 'ws://localhost:3001/ws';
+  // Derive WS URL from the API base URL — avoids the empty-port bug (wss://host:/ws)
+  const apiBase = (import.meta.env.VITE_API_URL as string | undefined) || window.location.origin;
+  return apiBase.replace(/^http/, 'ws') + '/ws';
+}
+
 export function useWebSocket({ onMessage, channelId, memberId }: UseWebSocketOptions) {
   const ws = useRef<WebSocket | null>(null);
   const [connected, setConnected] = useState(false);
@@ -13,8 +20,9 @@ export function useWebSocket({ onMessage, channelId, memberId }: UseWebSocketOpt
   const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const reconnectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const closing = useRef(false);
+  const retryCount = useRef(0);
 
-  // Stable refs so connect() doesn't need them as deps
+  // Stable refs — keeps connect() dependency-free
   const onMessageRef = useRef(onMessage);
   const channelIdRef = useRef(channelId);
   const memberIdRef = useRef(memberId);
@@ -24,17 +32,15 @@ export function useWebSocket({ onMessage, channelId, memberId }: UseWebSocketOpt
 
   const connect = useCallback(() => {
     if (reconnectTimer.current) clearTimeout(reconnectTimer.current);
+    // Don't open a second socket while one is already open/connecting
+    if (ws.current && (ws.current.readyState === WebSocket.OPEN || ws.current.readyState === WebSocket.CONNECTING)) return;
 
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const host = window.location.hostname;
-    const port = import.meta.env.DEV ? '3001' : window.location.port;
-    const url = `${protocol}//${host}:${port}/ws`;
-
-    const socket = new WebSocket(url);
+    const socket = new WebSocket(getWsUrl());
     ws.current = socket;
 
     socket.onopen = () => {
       setConnected(true);
+      retryCount.current = 0;
       if (memberIdRef.current) socket.send(JSON.stringify({ type: 'auth', memberId: memberIdRef.current }));
       if (channelIdRef.current) socket.send(JSON.stringify({ type: 'join_channel', channelId: channelIdRef.current }));
     };
@@ -54,12 +60,15 @@ export function useWebSocket({ onMessage, channelId, memberId }: UseWebSocketOpt
     socket.onclose = () => {
       setConnected(false);
       if (!closing.current) {
-        reconnectTimer.current = setTimeout(connect, 4000);
+        // Exponential backoff: 2s, 4s, 8s, capped at 30s
+        const delay = Math.min(2000 * 2 ** retryCount.current, 30000);
+        retryCount.current += 1;
+        reconnectTimer.current = setTimeout(connect, delay);
       }
     };
 
     socket.onerror = () => { socket.close(); };
-  }, []); // stable — uses refs, no deps
+  }, []);
 
   useEffect(() => {
     closing.current = false;
@@ -69,6 +78,18 @@ export function useWebSocket({ onMessage, channelId, memberId }: UseWebSocketOpt
       if (reconnectTimer.current) clearTimeout(reconnectTimer.current);
       ws.current?.close();
     };
+  }, [connect]);
+
+  // Reconnect when the page becomes visible again (mobile background → foreground)
+  useEffect(() => {
+    const handleVisible = () => {
+      if (document.visibilityState === 'visible' && !closing.current) {
+        retryCount.current = 0;
+        connect();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisible);
+    return () => document.removeEventListener('visibilitychange', handleVisible);
   }, [connect]);
 
   useEffect(() => {
