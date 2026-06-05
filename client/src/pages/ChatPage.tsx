@@ -63,6 +63,15 @@ export function ChatPage({ currentMember, onClose }: Props) {
     api.getMessages(activeChannel).then(setMessages);
   }, [activeChannel]);
 
+  // Re-fetch on reconnect to catch messages missed while disconnected
+  const wasConnected = useRef(false);
+  useEffect(() => {
+    const justReconnected = connected && !wasConnected.current;
+    wasConnected.current = connected;
+    if (!justReconnected) return;
+    api.getMessages(activeChannel).then(setMessages);
+  }, [connected, activeChannel]);
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
