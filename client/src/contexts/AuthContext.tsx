@@ -65,7 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw new Error(err.error ?? 'Erreur lors de la création du compte');
     }
     const { token: t, member } = await r.json();
-    try { localStorage.setItem('auth_token', t); } catch {} // blocked in iOS private mode
+    localStorage.setItem('auth_token', t);
     setToken(t);
     setUser(member);
     return member;
