@@ -15,8 +15,8 @@ const MONTH_NAMES_FR = [
 
 export function AgendaPage({ currentMember }: Props) {
   const now = new Date();
-  const [year, setYear] = useState(2026);
-  const [month, setMonth] = useState(4); // May = index 4
+  const [year, setYear] = useState(now.getFullYear());
+  const [month, setMonth] = useState(now.getMonth()); // 0-based, auto-updates to current month
   const [events, setEvents] = useState<Event[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editEvent, setEditEvent] = useState<Event | null>(null);

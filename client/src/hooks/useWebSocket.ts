@@ -11,8 +11,20 @@ export function useWebSocket({ onMessage, channelId, memberId }: UseWebSocketOpt
   const [connected, setConnected] = useState(false);
   const [typing, setTyping] = useState<string[]>([]);
   const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const reconnectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const closing = useRef(false);
+
+  // Stable refs so connect() doesn't need them as deps
+  const onMessageRef = useRef(onMessage);
+  const channelIdRef = useRef(channelId);
+  const memberIdRef = useRef(memberId);
+  useEffect(() => { onMessageRef.current = onMessage; });
+  useEffect(() => { channelIdRef.current = channelId; });
+  useEffect(() => { memberIdRef.current = memberId; });
 
   const connect = useCallback(() => {
+    if (reconnectTimer.current) clearTimeout(reconnectTimer.current);
+
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const host = window.location.hostname;
     const port = import.meta.env.DEV ? '3001' : window.location.port;
@@ -23,42 +35,38 @@ export function useWebSocket({ onMessage, channelId, memberId }: UseWebSocketOpt
 
     socket.onopen = () => {
       setConnected(true);
-      if (memberId) {
-        socket.send(JSON.stringify({ type: 'auth', memberId }));
-      }
-      if (channelId) {
-        socket.send(JSON.stringify({ type: 'join_channel', channelId }));
-      }
+      if (memberIdRef.current) socket.send(JSON.stringify({ type: 'auth', memberId: memberIdRef.current }));
+      if (channelIdRef.current) socket.send(JSON.stringify({ type: 'join_channel', channelId: channelIdRef.current }));
     };
 
     socket.onmessage = (e) => {
       try {
         const data = JSON.parse(e.data);
         if (data.type === 'typing') {
-          setTyping(prev => {
-            if (!prev.includes(data.memberId)) return [...prev, data.memberId];
-            return prev;
-          });
+          setTyping(prev => prev.includes(data.memberId) ? prev : [...prev, data.memberId]);
           if (typingTimer.current) clearTimeout(typingTimer.current);
           typingTimer.current = setTimeout(() => setTyping([]), 2000);
         }
-        onMessage?.(data);
+        onMessageRef.current?.(data);
       } catch {}
     };
 
     socket.onclose = () => {
       setConnected(false);
-      setTimeout(connect, 3000);
+      if (!closing.current) {
+        reconnectTimer.current = setTimeout(connect, 4000);
+      }
     };
 
-    socket.onerror = () => {
-      socket.close();
-    };
-  }, [channelId, memberId, onMessage]);
+    socket.onerror = () => { socket.close(); };
+  }, []); // stable — uses refs, no deps
 
   useEffect(() => {
+    closing.current = false;
     connect();
     return () => {
+      closing.current = true;
+      if (reconnectTimer.current) clearTimeout(reconnectTimer.current);
       ws.current?.close();
     };
   }, [connect]);

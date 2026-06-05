@@ -32,7 +32,10 @@ export function MonthGrid({ year, month, events, onDayClick, onEventClick }: Pro
 
   const getEventsForDay = (day: number) => {
     const ds = getDateStr(day);
-    return events.filter(e => e.date === ds);
+    return events.filter(e => {
+      const end = e.end_date || e.date;
+      return e.date <= ds && end >= ds;
+    });
   };
 
   return (
