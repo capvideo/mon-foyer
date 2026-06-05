@@ -22,12 +22,14 @@ export async function initVapid(): Promise<void> {
       priv = keys.privateKey;
       await db.run(
         `INSERT INTO app_settings (key, value) VALUES (?, ?)
-         ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value`,
+         ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value
+         RETURNING key`,
         'vapid_public', pub
       );
       await db.run(
         `INSERT INTO app_settings (key, value) VALUES (?, ?)
-         ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value`,
+         ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value
+         RETURNING key`,
         'vapid_private', priv
       );
       console.log('🔑 VAPID keys generated and stored in DB');

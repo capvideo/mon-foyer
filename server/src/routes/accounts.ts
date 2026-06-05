@@ -112,7 +112,8 @@ router.post('/:id/monthly-balance', async (req, res) => {
   const { month, opening_balance } = req.body;
   await db.run(
     `INSERT INTO monthly_balances (account_id, month, opening_balance) VALUES (?, ?, ?)
-     ON CONFLICT (account_id, month) DO UPDATE SET opening_balance = EXCLUDED.opening_balance`,
+     ON CONFLICT (account_id, month) DO UPDATE SET opening_balance = EXCLUDED.opening_balance
+     RETURNING account_id`,
     req.params.id, month, opening_balance
   );
   res.json({ success: true });
