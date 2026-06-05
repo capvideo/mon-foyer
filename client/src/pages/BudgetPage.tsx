@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Plus, Upload, Filter, BarChart2, PieChart as PieIcon, Home, RefreshCw } from 'lucide-react';
+import { Plus, Upload, BarChart2, PieChart as PieIcon, Home, RefreshCw, Settings, ChevronDown, ChevronUp, Check } from 'lucide-react';
 import { api } from '../utils/api';
 import { Account, Transaction, Member, formatAmount } from '../types';
 import { AccountCard } from '../components/budget/AccountCard';
@@ -9,11 +9,11 @@ import { RentalBlock } from '../components/budget/RentalBlock';
 import { CSVImport } from '../components/budget/CSVImport';
 import { BudgetChart } from '../components/budget/BudgetChart';
 import { RecurringTransactionsModal } from '../components/budget/RecurringTransactionsModal';
-import { parseCsv } from '../utils/csvParser';
 
 interface Props { currentMember: Member }
 
 const MONTHLY_MODE_FROM = '2026-06';
+const SETUP_MONTH = '2026-06';
 
 function currentMonth(): string {
   const d = new Date();
@@ -33,7 +33,13 @@ export function BudgetPage({ currentMember }: Props) {
   const [filter, setFilter] = useState<'all' | 'income' | 'expense'>('all');
   const [month, setMonth] = useState(currentMonth);
 
+  // Opening balance setup state
+  const [showSetup, setShowSetup] = useState(false);
+  const [openingInputs, setOpeningInputs] = useState<Record<number, string>>({});
+  const [savingBalances, setSavingBalances] = useState(false);
+
   const isMonthlyMode = month >= MONTHLY_MODE_FROM;
+  const isSetupMonth = month === SETUP_MONTH;
 
   const load = async () => {
     const [accs, txs] = await Promise.all([
@@ -43,9 +49,33 @@ export function BudgetPage({ currentMember }: Props) {
     setAccounts(accs);
     setTransactions(txs);
     if (!selectedAccount && accs.length) setSelectedAccount(accs[0].id);
+    // Pre-fill opening inputs with current opening balances
+    const inputs: Record<number, string> = {};
+    for (const a of accs) {
+      if (a.opening_balance !== undefined) {
+        inputs[a.id] = a.opening_balance.toString();
+      }
+    }
+    setOpeningInputs(inputs);
   };
 
   useEffect(() => { load(); }, [month]);
+
+  const handleSaveOpeningBalances = async () => {
+    setSavingBalances(true);
+    try {
+      for (const acc of accounts) {
+        const val = parseFloat(openingInputs[acc.id] ?? '0');
+        if (!isNaN(val)) {
+          await api.setMonthlyBalance(acc.id, month, val);
+        }
+      }
+      setShowSetup(false);
+      load();
+    } finally {
+      setSavingBalances(false);
+    }
+  };
 
   const filteredTx = transactions.filter(t => {
     if (selectedAccount && t.account_id !== selectedAccount) return false;
@@ -134,6 +164,62 @@ export function BudgetPage({ currentMember }: Props) {
         })}
       </div>
 
+      {/* Opening balance setup panel (shown for the first monthly month) */}
+      {isMonthlyMode && (
+        <div className={`rounded-2xl border-2 transition-colors overflow-hidden ${
+          isSetupMonth ? 'border-amber-200 bg-amber-50' : 'border-gray-200 bg-white'
+        }`}>
+          <button
+            onClick={() => setShowSetup(!showSetup)}
+            className="w-full flex items-center justify-between px-4 py-3"
+          >
+            <div className="flex items-center gap-2">
+              <Settings size={15} className={isSetupMonth ? 'text-amber-600' : 'text-gray-400'} />
+              <span className={`text-sm font-medium ${isSetupMonth ? 'text-amber-800' : 'text-gray-600'}`}>
+                {isSetupMonth ? 'Configurer les soldes de départ' : 'Modifier les soldes d\'ouverture'}
+              </span>
+            </div>
+            {showSetup ? <ChevronUp size={15} className="text-gray-400" /> : <ChevronDown size={15} className="text-gray-400" />}
+          </button>
+
+          {showSetup && (
+            <div className="px-4 pb-4 space-y-3 border-t border-amber-200">
+              <p className="text-xs text-amber-700 mt-3">
+                Saisissez le solde réel de chaque compte bancaire au 1er {isSetupMonth ? 'juin 2026' : month.replace('-', '/')}
+              </p>
+              {accounts.map(acc => (
+                <div key={acc.id} className="flex items-center gap-3">
+                  <div
+                    className="w-3 h-3 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: acc.color }}
+                  />
+                  <span className="text-sm text-gray-700 flex-1">{acc.bank} – {acc.name}</span>
+                  <div className="flex items-center gap-1">
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={openingInputs[acc.id] ?? ''}
+                      onChange={e => setOpeningInputs(s => ({ ...s, [acc.id]: e.target.value }))}
+                      placeholder="0.00"
+                      className="w-28 text-sm text-right border border-amber-200 rounded-xl px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-amber-300"
+                    />
+                    <span className="text-sm text-gray-400">€</span>
+                  </div>
+                </div>
+              ))}
+              <button
+                onClick={handleSaveOpeningBalances}
+                disabled={savingBalances}
+                className="w-full flex items-center justify-center gap-2 bg-amber-500 text-white rounded-xl py-2.5 text-sm font-semibold hover:bg-amber-600 transition-colors disabled:opacity-50"
+              >
+                <Check size={15} />
+                {savingBalances ? 'Enregistrement...' : 'Enregistrer les soldes'}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Chart */}
       <div className="bg-white rounded-2xl p-4 border border-gray-100">
         <div className="flex items-center justify-between mb-3">
@@ -166,13 +252,13 @@ export function BudgetPage({ currentMember }: Props) {
         <div className="flex items-center gap-2">
           <Home size={16} className={showRental ? 'text-blue-500' : 'text-gray-400'} />
           <span className={`text-sm font-medium ${showRental ? 'text-blue-700' : 'text-gray-600'}`}>
-            Bloc Locatif
+            Gestion Locative
           </span>
         </div>
         <span className="text-xs text-gray-400">{showRental ? 'Masquer' : 'Afficher'}</span>
       </button>
 
-      {showRental && <RentalBlock transactions={transactions} />}
+      {showRental && <RentalBlock month={month} />}
 
       {/* Actions */}
       <div className="flex gap-2">

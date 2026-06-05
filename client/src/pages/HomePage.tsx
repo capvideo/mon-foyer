@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { TrendingUp, TrendingDown, Calendar, CheckSquare, ShoppingCart, ArrowRight } from 'lucide-react';
+import { TrendingUp, TrendingDown, Calendar, CheckSquare, ArrowRight } from 'lucide-react';
 import { api } from '../utils/api';
 import { Account, Event, Todo, Transaction, Member, formatAmount, formatDateShort, MEMBERS } from '../types';
 import { MemberAvatar } from '../components/common/MemberAvatar';
@@ -10,6 +10,17 @@ interface Props {
   onNavigate: (tab: string) => void;
 }
 
+function currentMonth(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function currentMonthLabel(): string {
+  return new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric' }).format(new Date());
+}
+
+const MONTHLY_MODE_FROM = '2026-06';
+
 export function HomePage({ currentMember, onNavigate }: Props) {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -18,11 +29,12 @@ export function HomePage({ currentMember, onNavigate }: Props) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const month = '2026-05';
+    const month = currentMonth();
+    const useMonthlyMode = month >= MONTHLY_MODE_FROM;
     Promise.all([
-      api.getAccounts(),
+      api.getAccounts(useMonthlyMode ? month : undefined),
       api.getTransactions({ month }),
-      api.getEvents({ month: '2026-05' }),
+      api.getEvents({ month }),
       api.getTodos({ status: 'pending' }),
     ]).then(([accs, txs, evs, tds]) => {
       setAccounts(accs);
@@ -104,7 +116,7 @@ export function HomePage({ currentMember, onNavigate }: Props) {
       {/* Budget mini chart */}
       <div className="bg-white rounded-2xl p-4 border border-gray-100">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="font-bold text-gray-800 text-sm">Budget mai 2026</h3>
+          <h3 className="font-bold text-gray-800 text-sm capitalize">Budget {currentMonthLabel()}</h3>
           <button onClick={() => onNavigate('budget')} className="text-xs text-foyer-500 flex items-center gap-1">
             Voir tout <ArrowRight size={12} />
           </button>

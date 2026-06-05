@@ -27,6 +27,7 @@ import todosRouter from './routes/todos';
 import chatRouter from './routes/chat';
 import pushRouter from './routes/push';
 import recurringRouter from './routes/recurring';
+import rentalRouter from './routes/rental';
 
 const PORT = process.env.PORT || 3001;
 
@@ -58,6 +59,7 @@ async function main() {
   app.use('/api/chat', requireAuth, chatRouter);
   app.use('/api/push', requireAuth, pushRouter);
   app.use('/api/recurring', requireAuth, recurringRouter);
+  app.use('/api/rental', requireAuth, rentalRouter);
 
   // Members endpoint
   app.get('/api/members', requireAuth, async (_req, res) => {

@@ -167,6 +167,24 @@ export async function initDb(): Promise<void> {
       default_day INTEGER NOT NULL DEFAULT 1,
       active INTEGER NOT NULL DEFAULT 1,
       notes TEXT
+    );
+    CREATE TABLE IF NOT EXISTS rental_properties (
+      id SERIAL PRIMARY KEY,
+      name TEXT NOT NULL,
+      credit_label TEXT NOT NULL,
+      credit_amount REAL NOT NULL,
+      rent_label TEXT NOT NULL,
+      rent_amount REAL NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS rental_month_data (
+      id SERIAL PRIMARY KEY,
+      property_id INTEGER NOT NULL,
+      month TEXT NOT NULL,
+      rent_validated INTEGER NOT NULL DEFAULT 0,
+      rent_date TEXT,
+      copro_charges TEXT NOT NULL DEFAULT '[]',
+      agence_charges TEXT NOT NULL DEFAULT '[]',
+      UNIQUE(property_id, month)
     )
   `);
   // Migrations
@@ -174,4 +192,41 @@ export async function initDb(): Promise<void> {
   await pool.query(`ALTER TABLE members ADD COLUMN IF NOT EXISTS password_hash TEXT`);
   await pool.query(`ALTER TABLE members ADD COLUMN IF NOT EXISTS is_admin INTEGER NOT NULL DEFAULT 0`);
   await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS members_email_idx ON members(email) WHERE email IS NOT NULL`);
+
+  // Seed rental properties
+  const propCount = await db.get('SELECT COUNT(*) as n FROM rental_properties') as any;
+  if (Number(propCount?.n ?? 0) === 0) {
+    await db.run(
+      'INSERT INTO rental_properties (name, credit_label, credit_amount, rent_label, rent_amount) VALUES (?, ?, ?, ?, ?)',
+      'Appartement 09/10', 'Crédit LCL 09/10', 927.71, 'Loyer locataire', 1500.00
+    );
+    await db.run(
+      'INSERT INTO rental_properties (name, credit_label, credit_amount, rent_label, rent_amount) VALUES (?, ?, ?, ?, ?)',
+      'Appartement 20/21', 'Crédit LCL 20/21', 337.77, 'CIP Gestion', 465.91
+    );
+  }
+
+  // Seed recurring transactions
+  const recCount = await db.get('SELECT COUNT(*) as n FROM recurring_transactions') as any;
+  if (Number(recCount?.n ?? 0) === 0) {
+    const seeds = [
+      { label: 'Salaire José (CAP VIDEO)', amount: 2160.05, type: 'income', category: 'salaires', day: 5 },
+      { label: 'Salaire Anaïs', amount: 800.00, type: 'income', category: 'salaires', day: 5 },
+      { label: 'CAF', amount: 200.00, type: 'income', category: 'caf', day: 10 },
+      { label: 'CIP Gestion (locatif)', amount: 465.91, type: 'income', category: 'cip_gestion', day: 15 },
+      { label: 'Loyer locataire', amount: 1500.00, type: 'income', category: 'loyers_percus', day: 5 },
+      { label: 'Loyer résidence principale', amount: 850.00, type: 'expense', category: 'loyer_residence', day: 1 },
+      { label: 'Crédit LCL 09/10', amount: 927.71, type: 'expense', category: 'credit_immo', day: 10 },
+      { label: 'Crédit LCL 20/21', amount: 337.77, type: 'expense', category: 'credit_immo', day: 20 },
+      { label: 'Spotify', amount: 9.99, type: 'expense', category: 'abonnements', day: 15 },
+      { label: 'Bouygues Telecom', amount: 40.00, type: 'expense', category: 'telecom', day: 5 },
+      { label: 'Assurance habitation', amount: 80.00, type: 'expense', category: 'assurances', day: 5 },
+    ];
+    for (const s of seeds) {
+      await db.run(
+        'INSERT INTO recurring_transactions (label, amount, type, category, default_day) VALUES (?, ?, ?, ?, ?)',
+        s.label, s.amount, s.type, s.category, s.day
+      );
+    }
+  }
 }

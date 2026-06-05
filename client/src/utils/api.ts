@@ -37,6 +37,15 @@ export const api = {
   setMonthlyBalance: (accountId: number, month: string, opening_balance: number) =>
     req<any>(`/accounts/${accountId}/monthly-balance`, { method: 'POST', body: JSON.stringify({ month, opening_balance }) }),
 
+  // Rental management
+  getRentalProperties: () => req<any[]>('/rental/properties'),
+  updateRentalProperty: (id: number, data: any) =>
+    req<any>(`/rental/properties/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  getRentalMonthData: (propertyId: number, month: string) =>
+    req<any>(`/rental/month/${propertyId}/${month}`),
+  updateRentalMonthData: (propertyId: number, month: string, data: any) =>
+    req<any>(`/rental/month/${propertyId}/${month}`, { method: 'PUT', body: JSON.stringify(data) }),
+
   // Recurring transactions
   getRecurring: () => req<any[]>('/recurring'),
   createRecurring: (data: any) => req<any>('/recurring', { method: 'POST', body: JSON.stringify(data) }),
