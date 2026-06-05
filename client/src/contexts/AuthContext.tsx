@@ -40,14 +40,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const r = await fetch(`${BASE}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email: email.toLowerCase().trim(), password }),
     });
     if (!r.ok) {
-      const err = await r.json();
-      throw new Error(err.error ?? 'Erreur de connexion');
+      let msg = 'Erreur de connexion';
+      try { const err = await r.json(); msg = err.error ?? msg; } catch {}
+      throw new Error(msg);
     }
     const { token: t, member } = await r.json();
-    localStorage.setItem('auth_token', t);
+    try { localStorage.setItem('auth_token', t); } catch {} // blocked in iOS private mode
     setToken(t);
     setUser(member);
     return member;

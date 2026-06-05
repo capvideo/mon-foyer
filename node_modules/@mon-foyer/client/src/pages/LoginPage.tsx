@@ -41,6 +41,10 @@ export function LoginPage() {
               onChange={e => setEmail(e.target.value)}
               required
               autoComplete="email"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              inputMode="email"
               placeholder="prenom@monfoyer.fr"
               className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-foyer-300"
             />

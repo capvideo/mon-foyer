@@ -39,12 +39,12 @@ async function main() {
   const app = express();
   const server = http.createServer(app);
 
-  const allowedOrigins = [
-    'https://mon-foyerclient-production.up.railway.app',
-    'http://localhost:5173',
-    ...(process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',').map(s => s.trim()) : []),
-  ];
-  const corsOptions = { origin: allowedOrigins };
+  // Allow all origins — API is protected by JWT Bearer tokens, not cookies
+  const corsOptions = {
+    origin: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  };
   app.options('*', cors(corsOptions));
   app.use(cors(corsOptions));
   app.use(express.json());
